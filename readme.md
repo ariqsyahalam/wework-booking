@@ -1,5 +1,3 @@
-Here's an enhanced and more detailed `README.md` for your WeWork Space Booker application:
-
 # WeWork Space Booker 🚀
 
 A comprehensive Node.js solution for automating WeWork space bookings with advanced scheduling capabilities.
