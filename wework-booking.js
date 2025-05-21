@@ -98,7 +98,9 @@ class WeWorkBooker {
       onlyWeekdays = true,
       startTime = '08:00',
       endTime = '17:00',
-      delayBetweenRequests = 1500
+      delayBetweenRequests = 1500,
+      wfaDates = [], // Specific WFA dates (YYYY-MM-DD)
+      wfaDaysOfWeek = [] // WFA days of the week (e.g., ['Monday', 'Friday'])
     } = options;
     
     const results = [];
@@ -107,17 +109,47 @@ class WeWorkBooker {
     
     console.log(`\n📅 Processing bookings from ${current.format('DD/MM/YYYY')} to ${end.format('DD/MM/YYYY')}`);
     console.log(`⏰ Time slot: ${startTime} - ${endTime}`);
-    console.log(`📌 Mode: ${onlyWeekdays ? 'Weekdays only' : 'All days'}\n`);
+    console.log(`📌 Mode: ${onlyWeekdays ? 'Weekdays only' : 'All days'}`);
+    if (wfaDates.length > 0) {
+      console.log(`🏠 Specific WFA dates to skip: ${wfaDates.join(', ')}`);
+    }
+    if (wfaDaysOfWeek.length > 0) {
+        console.log(`🏠 WFA days of week to skip: ${wfaDaysOfWeek.join(', ')}`);
+    }
+    console.log('\n');
+
 
     while (current.isSameOrBefore(end)) {
       const dateStr = current.format('YYYY-MM-DD');
+      const dayOfWeek = current.format('dddd'); // e.g., 'Monday'
       
-      if (!onlyWeekdays || (current.day() !== 0 && current.day() !== 6)) {
+      let skip = false;
+      let skipReason = '';
+
+      // Check if it's a weekend (if onlyWeekdays is true)
+      if (onlyWeekdays && (current.day() === 0 || current.day() === 6)) {
+        skip = true;
+        skipReason = current.format('dddd');
+      } 
+      
+      // Check if it's a specific WFA date
+      if (!skip && wfaDates.includes(dateStr)) {
+          skip = true;
+          skipReason = 'WFA date';
+      }
+
+      // Check if it's a WFA day of the week
+      if (!skip && wfaDaysOfWeek.includes(dayOfWeek)) {
+          skip = true;
+          skipReason = 'WFA day of week';
+      }
+
+      if (!skip) {
         const result = await this.bookSpace(locationId, spaceId, dateStr, startTime, endTime);
         results.push(result);
         await new Promise(resolve => setTimeout(resolve, delayBetweenRequests));
       } else {
-        console.log(`⏩ Skipped ${dateStr} (${current.format('dddd')})`);
+        console.log(`⏩ Skipped ${dateStr} (${skipReason})`);
       }
       
       current.add(1, 'days');
@@ -130,10 +162,14 @@ class WeWorkBooker {
     console.log('\n📊 Booking Summary:');
     console.log(`✅ Success: ${success}`);
     console.log(`❌ Failed: ${failed}`);
-    if (onlyWeekdays) {
-      const totalDays = end.diff(startDate, 'days') + 1;
-      console.log(`⏩ Skipped: ${totalDays - results.length} (weekends)`);
-    }
+    
+    // Calculate skipped days including weekends, specific WFA dates, and WFA days of week
+    const totalDaysInRange = end.diff(moment(startDate), 'days') + 1;
+    const bookedCount = success + failed;
+    const skippedCount = totalDaysInRange - bookedCount;
+    
+    console.log(`⏩ Skipped: ${skippedCount} days`);
+
 
     return results;
   }
@@ -151,6 +187,22 @@ function askQuestion(query) {
     resolve(ans);
   }));
 }
+
+// Helper to format day names consistently
+function formatDayName(input) {
+    const dayMap = {
+        'sunday': 'Sunday', 'sun': 'Sunday',
+        'monday': 'Monday', 'mon': 'Monday',
+        'tuesday': 'Tuesday', 'tue': 'Tuesday',
+        'wednesday': 'Wednesday', 'wed': 'Wednesday',
+        'thursday': 'Thursday', 'thu': 'Thursday',
+        'friday': 'Friday', 'fri': 'Friday',
+        'saturday': 'Saturday', 'sat': 'Saturday'
+    };
+    const lowerInput = input.toLowerCase();
+    return dayMap[lowerInput] || null; // Return formatted name or null if invalid
+}
+
 
 // Main program
 async function main() {
@@ -171,10 +223,35 @@ async function main() {
     // 3. Get time slot
     const startTime = await askQuestion('Start time (HH:MM) [default: 08:00]: ') || '08:00';
     const endTime = await askQuestion('End time (HH:MM) [default: 17:00]: ') || '17:00';
+
+    // 4. Get specific WFA dates
+    const wfaDatesInput = await askQuestion('Enter specific WFA dates (DD/MM/YYYY, comma-separated, leave blank if none): ');
+    const wfaDates = wfaDatesInput
+      .split(',')
+      .map(date => date.trim())
+      .filter(date => date) // Remove empty strings
+      .map(date => moment(date, 'DD/MM/YYYY').format('YYYY-MM-DD')) // Format to YYYY-MM-DD
+      .filter(date => moment(date, 'YYYY-MM-DD', true).isValid()); // Filter out invalid dates
+
+    // 5. Get WFA days of the week
+    const wfaDaysInput = await askQuestion('Enter WFA days of the week (Monday, Friday, etc., comma-separated, leave blank if none): ');
+    const wfaDaysOfWeek = wfaDaysInput
+        .split(',')
+        .map(day => day.trim())
+        .filter(day => day) // Remove empty strings
+        .map(day => formatDayName(day)) // Format day name
+        .filter(day => day !== null); // Filter out invalid day names
+
     
-    // 4. Confirmation
+    // 6. Confirmation
     console.log(`\nYou're about to book from ${startDate} to ${endDate}`);
     console.log(`Time slot: ${startTime}-${endTime} at SINARMAS LAND PLAZA SUDIRMAN`);
+    if (wfaDates.length > 0) {
+      console.log(`Skipping specific WFA dates: ${wfaDates.join(', ')}`);
+    }
+    if (wfaDaysOfWeek.length > 0) {
+        console.log(`Skipping WFA days of week: ${wfaDaysOfWeek.join(', ')}`);
+    }
     const confirm = await askQuestion('Proceed? (y/n): ');
     
     if (confirm.toLowerCase() !== 'y') {
@@ -182,7 +259,7 @@ async function main() {
       process.exit(0);
     }
 
-    // 5. Process bookings
+    // 7. Process bookings
     const booker = new WeWorkBooker(bearerToken);
     await booker.bookDateRange(
       locationId, 
@@ -192,7 +269,9 @@ async function main() {
       {
         startTime,
         endTime,
-        onlyWeekdays: true
+        onlyWeekdays: true, // Keep onlyWeekdays true to skip Sat/Sun by default
+        wfaDates, // Pass specific WFA dates
+        wfaDaysOfWeek // Pass WFA days of week
       }
     );
 
