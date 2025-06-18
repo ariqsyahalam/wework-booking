@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WeWork Booking System</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            font-weight: 300;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 1.1rem;
+        }
+
+        .form-container {
+            padding: 40px;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+            font-size: 0.95rem;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e1e5e9;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            background: #f8f9fa;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+            margin-top: 20px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .results {
+            display: none;
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+
+        .summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .summary-item {
+            text-align: center;
+            padding: 15px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .summary-number {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .success { color: #28a745; }
+        .failed { color: #dc3545; }
+        .skipped { color: #ffc107; }
+        .total { color: #6c757d; }
+
+        .result-list {
+            max-height: 300px;
+            overflow-y: auto;
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+        }
+
+        .result-item {
+            padding: 10px;
+            margin-bottom: 8px;
+            border-radius: 8px;
+            border-left: 4px solid;
+        }
+
+        .result-item.success {
+            background: #d4edda;
+            border-color: #28a745;
+        }
+
+        .result-item.failed {
+            background: #f8d7da;
+            border-color: #dc3545;
+        }
+
+        .result-item.skipped {
+            background: #fff3cd;
+            border-color: #ffc107;
+        }
+
+        .help-text {
+            font-size: 0.85rem;
+            color: #6c757d;
+            margin-top: 5px;
+        }
+
+        .icon {
+            margin-right: 8px;
+        }
+
+        @media (max-width: 768px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+            
+            .container {
+                margin: 10px;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .form-container {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1><i class="fas fa-building"></i> WeWork Booking System</h1>
+            <p>Sistem booking otomatis untuk ruang kerja WeWork</p>
+        </div>
+
+        <div class="form-container">
+            <form id="bookingForm">
+                <div class="form-group">
+                    <label for="bearerToken">
+                        <i class="fas fa-key icon"></i>Bearer Token *
+                    </label>
+                    <input type="password" id="bearerToken" name="bearerToken" required 
+                           placeholder="Masukkan Bearer Token dari WeWork">
+                    <div class="help-text">Token autentikasi yang didapat dari WeWork dashboard</div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="locationId">
+                            <i class="fas fa-map-marker-alt icon"></i>Location ID
+                        </label>
+                        <input type="text" id="locationId" name="locationId" 
+                               value="67a0a8eb-b18c-4217-ac0a-71438297679e"
+                               placeholder="ID lokasi WeWork">
+                    </div>
+                    <div class="form-group">
+                        <label for="spaceId">
+                            <i class="fas fa-chair icon"></i>Space ID
+                        </label>
+                        <input type="text" id="spaceId" name="spaceId" 
+                               value="3dee52f6-3e25-11e9-9bc8-0af5174e198c"
+                               placeholder="ID ruang kerja">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="startDate">
+                            <i class="fas fa-calendar-alt icon"></i>Tanggal Mulai *
+                        </label>
+                        <input type="date" id="startDate" name="startDate" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="endDate">
+                            <i class="fas fa-calendar-alt icon"></i>Tanggal Selesai *
+                        </label>
+                        <input type="date" id="endDate" name="endDate" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="startTime">
+                            <i class="fas fa-clock icon"></i>Jam Mulai
+                        </label>
+                        <input type="time" id="startTime" name="startTime" value="08:00">
+                    </div>
+                    <div class="form-group">
+                        <label for="endTime">
+                            <i class="fas fa-clock icon"></i>Jam Selesai
+                        </label>
+                        <input type="time" id="endTime" name="endTime" value="17:00">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="wfaDates">
+                        <i class="fas fa-home icon"></i>Tanggal WFA (Work From Anywhere)
+                    </label>
+                    <input type="text" id="wfaDates" name="wfaDates" 
+                           placeholder="2024-01-15, 2024-01-20 (pisahkan dengan koma)">
+                    <div class="help-text">Tanggal-tanggal yang akan dilewati karena WFA (format: YYYY-MM-DD)</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="wfaDaysOfWeek">
+                        <i class="fas fa-calendar-week icon"></i>Hari WFA dalam Seminggu
+                    </label>
+                    <input type="text" id="wfaDaysOfWeek" name="wfaDaysOfWeek" 
+                           placeholder="Monday, Friday (pisahkan dengan koma)">
+                    <div class="help-text">Hari-hari dalam seminggu yang akan dilewati karena WFA</div>
+                </div>
+
+                <button type="submit" class="btn">
+                    <i class="fas fa-rocket icon"></i>Mulai Booking
+                </button>
+            </form>
+
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>Sedang memproses booking...</p>
+            </div>
+
+            <div class="results" id="results">
+                <h3><i class="fas fa-chart-bar icon"></i>Hasil Booking</h3>
+                <div class="summary" id="summary"></div>
+                <div class="result-list" id="resultList"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('bookingForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const data = {
+                bearerToken: formData.get('bearerToken'),
+                locationId: formData.get('locationId'),
+                spaceId: formData.get('spaceId'),
+                startDate: formData.get('startDate'),
+                endDate: formData.get('endDate'),
+                startTime: formData.get('startTime'),
+                endTime: formData.get('endTime'),
+                wfaDates: formData.get('wfaDates') ? formData.get('wfaDates').split(',').map(d => d.trim()).filter(d => d) : [],
+                wfaDaysOfWeek: formData.get('wfaDaysOfWeek') ? formData.get('wfaDaysOfWeek').split(',').map(d => d.trim()).filter(d => d) : []
+            };
+
+            // Show loading
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('results').style.display = 'none';
+            document.querySelector('.btn').disabled = true;
+
+            try {
+                const response = await fetch('/api/book', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    displayResults(result);
+                } else {
+                    alert('Error: ' + result.error);
+                }
+            } catch (error) {
+                alert('Network error: ' + error.message);
+            } finally {
+                document.getElementById('loading').style.display = 'none';
+                document.querySelector('.btn').disabled = false;
+            }
+        });
+
+        function displayResults(result) {
+            const { summary, results } = result;
+            
+            // Display summary
+            const summaryEl = document.getElementById('summary');
+            summaryEl.innerHTML = `
+                <div class="summary-item">
+                    <div class="summary-number success">${summary.success}</div>
+                    <div>Berhasil</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-number failed">${summary.failed}</div>
+                    <div>Gagal</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-number skipped">${summary.skipped}</div>
+                    <div>Dilewati</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-number total">${summary.total}</div>
+                    <div>Total</div>
+                </div>
+            `;
+
+            // Display detailed results
+            const resultListEl = document.getElementById('resultList');
+            resultListEl.innerHTML = results.map(item => {
+                const className = item.skipped ? 'skipped' : (item.success ? 'success' : 'failed');
+                const icon = item.skipped ? 'fa-forward' : (item.success ? 'fa-check-circle' : 'fa-times-circle');
+                
+                return `
+                    <div class="result-item ${className}">
+                        <i class="fas ${icon} icon"></i>
+                        <strong>${item.date}</strong> - ${item.message}
+                    </div>
+                `;
+            }).join('');
+
+            document.getElementById('results').style.display = 'block';
+        }
+
+        // Set default dates (today and next week)
+        const today = new Date();
+        const nextWeek = new Date(today);
+        nextWeek.setDate(today.getDate() + 7);
+        
+        document.getElementById('startDate').value = today.toISOString().split('T')[0];
+        document.getElementById('endDate').value = nextWeek.toISOString().split('T')[0];
+    </script>
+</body>
+</html>

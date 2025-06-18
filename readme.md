@@ -1,39 +1,61 @@
-# WeWork Space Booker 🚀
+# WeWork Booking System
 
-A comprehensive Node.js solution for automating WeWork space bookings with advanced scheduling capabilities.
+Sistem booking otomatis untuk ruang kerja WeWork dengan antarmuka web yang mudah digunakan.
 
-## 🌟 Features
+## Fitur
 
-- **Flexible Date Ranges**: Book spaces for any date range (past validations included)
-- **Smart Scheduling**:
-  - Weekday-only filtering (Mon-Fri)
-  - Customizable time slots (8AM-5PM default)
-  - Timezone-aware (Asia/Jakarta GMT+7)
-- **Interactive CLI**: User-friendly command-line interface
-- **Real-time Feedback**: 
-  - ✅ Success indicators
-  - ❌ Error messages with details
-  - ⏩ Skipped days tracking
-- **Comprehensive Reporting**: Summary statistics after completion
+- ✨ **Antarmuka Web Modern**: UI yang responsif dan user-friendly
+- 📅 **Booking Rentang Tanggal**: Book multiple hari sekaligus
+- 🏠 **WFA Support**: Skip tanggal atau hari tertentu untuk Work From Anywhere
+- ⏰ **Kustomisasi Waktu**: Atur jam mulai dan selesai sesuai kebutuhan
+- 📊 **Laporan Real-time**: Lihat hasil booking secara langsung
+- 🔒 **Secure**: Token authentication untuk keamanan
+- 🖥️ **CLI & Web**: Tersedia dalam versi command line dan web interface
 
-## 📦 Prerequisites
+## Cara Menggunakan
 
-- Node.js v14+ ([Download](https://nodejs.org/))
-- npm v6+ (comes with Node.js)
-- WeWork member account with booking privileges
+### 1. Instalasi
 
-## 🛠 Installation
-
-1. Clone the repository:
 ```bash
-git clone https://github.com/yourusername/wework-booker.git
+# Clone atau download project ini
 cd wework-booker
+
+# Install dependencies
+npm install
 ```
 
-2. Install dependencies:
+### 2. Web Interface (Recommended)
+
 ```bash
-npm install axios moment
+# Jalankan server
+npm start
 ```
+
+Server akan berjalan di `http://localhost:3000`
+
+#### Menggunakan Web Interface:
+
+1. **Buka browser** dan akses `http://localhost:3000`
+2. **Isi form booking** dengan informasi berikut:
+   - **Bearer Token**: Token autentikasi dari WeWork (wajib)
+   - **Location ID**: ID lokasi WeWork (default: Sinarmas Land Plaza)
+   - **Space ID**: ID ruang kerja (default sudah diisi)
+   - **Tanggal Mulai & Selesai**: Rentang tanggal yang ingin di-book
+   - **Jam Mulai & Selesai**: Waktu kerja (default: 08:00-17:00)
+   - **Tanggal WFA**: Tanggal spesifik yang ingin dilewati (opsional)
+   - **Hari WFA**: Hari dalam seminggu yang ingin dilewati (opsional)
+
+3. **Klik "Mulai Booking"** dan tunggu prosesnya selesai
+4. **Lihat hasil** booking dalam bentuk summary dan detail
+
+### 3. Command Line Interface
+
+```bash
+# Jalankan CLI version
+node wework-booking.js
+```
+
+Ikuti prompt untuk memasukkan data booking.
 
 ## 🔍 How to Get Your Bearer Token
 
@@ -161,6 +183,72 @@ Customize by modifying these parameters in code:
    - Check WeWork's Terms of Service
    - This is for personal/educational use
    - Commercial use may require permission
+
+## Scripts
+
+### Development
+```bash
+npm start    # Jalankan web server
+npm run dev  # Jalankan web server (alias)
+```
+
+### Production (PM2)
+```bash
+npm run pm2:start    # Start dengan PM2
+npm run pm2:stop     # Stop PM2 process
+npm run pm2:restart  # Restart PM2 process
+npm run pm2:delete   # Delete PM2 process
+npm run pm2:logs     # View PM2 logs
+npm run pm2:monit    # PM2 monitoring
+npm run deploy       # Run deployment script
+```
+
+## Deployment ke VPS
+
+Aplikasi ini sudah siap untuk di-deploy ke VPS dengan konfigurasi berikut:
+
+- **Port**: 3519
+- **Domain**: weworkbook.risya.id
+- **Process Manager**: PM2
+- **Web Server**: Nginx
+- **SSL**: Let's Encrypt
+
+### Quick Deployment
+
+1. **Upload project ke VPS**:
+   ```bash
+   scp -r . user@your-vps:/var/www/wework-booker
+   ```
+
+2. **SSH ke VPS dan jalankan deployment**:
+   ```bash
+   ssh user@your-vps
+   cd /var/www/wework-booker
+   ./deploy.sh
+   ```
+
+3. **Setup Nginx**:
+   ```bash
+   sudo cp nginx.conf /etc/nginx/sites-available/weworkbook.risya.id
+   sudo ln -s /etc/nginx/sites-available/weworkbook.risya.id /etc/nginx/sites-enabled/
+   sudo nginx -t
+   sudo systemctl reload nginx
+   ```
+
+4. **Setup SSL**:
+   ```bash
+   sudo certbot --nginx -d weworkbook.risya.id
+   ```
+
+### Files untuk Deployment
+
+- `ecosystem.config.js` - Konfigurasi PM2
+- `nginx.conf` - Konfigurasi Nginx dengan SSL
+- `deploy.sh` - Script deployment otomatis
+- `.env.example` - Template environment variables
+- `DEPLOYMENT.md` - Panduan deployment lengkap
+
+Lihat [DEPLOYMENT.md](DEPLOYMENT.md) untuk panduan deployment yang lebih detail.
 
 ## 📜 License
 
